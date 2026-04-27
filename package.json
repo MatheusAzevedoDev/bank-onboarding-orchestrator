@@ -1,9 +1,13 @@
 {
   "name": "bank-onboarding-orchestrator",
   "displayName": "Bank Onboarding Orchestrator",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Este projeto simula um cenário real de backend distribuído — semelhante ao que é utilizado em bancos, fintechs e plataformas cloud como AWS Step Functions. O sistema executa etapas de onboarding de forma ordenada, controla o estado da execução, aplica retry automático em falhas, executa rollback via compensação (padrão Saga) e garante idempotência por CPF.",
-  "tags": [ "go", "gin", "clean-arc" ],
+  "tags": [
+    "go",
+    "gin",
+    "clean-arc"
+  ],
   "scripts": {
     "commit": "cz",
     "changelog": "conventional-changelog -p angular -i CHANGELOG.md -s -r 1",
