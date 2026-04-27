@@ -1,0 +1,29 @@
+name: Promote to Main
+
+on:
+  push:
+    branches: [develop]
+
+jobs:
+  open-pr-to-main:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - name: Abrir PR para main
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          REPO="${{ github.repository }}"
+          EXISTING=$(gh pr list --repo "$REPO" --head develop --base main --json number --jq length)
+          if [ "$EXISTING" = "0" ]; then
+            gh pr create \
+              --repo "$REPO" \
+              --base main \
+              --head develop \
+              --title "promote: develop → main" \
+              --body "PR automático gerado após merge em \`develop\`. Revise antes de fazer merge para \`main\` (produção)."
+          else
+            echo "PR já existe para develop → main, pulando."
+          fi

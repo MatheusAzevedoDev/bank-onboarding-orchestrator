@@ -1,0 +1,67 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - 'feature/**'
+      - 'bug/**'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - run: npm install
+      # Adicione aqui os comandos do seu projeto:
+      # - run: npm run lint
+      # - run: npm test
+      # - run: npm run build
+
+  open-pr-to-develop:
+    needs: test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Criar branch develop se não existir
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if git ls-remote --exit-code origin develop > /dev/null 2>&1; then
+            echo "Branch develop já existe."
+          else
+            echo "Branch develop não encontrada, criando a partir de main..."
+            MAIN_SHA=$(git rev-parse origin/main)
+            curl -s -X POST \
+              -H "Authorization: token $GH_TOKEN" \
+              -H "Accept: application/vnd.github.v3+json" \
+              "https://api.github.com/repos/${{ github.repository }}/git/refs" \
+              -d "{\"ref\": \"refs/heads/develop\", \"sha\": \"$MAIN_SHA\"}"
+            echo "Branch develop criada."
+          fi
+
+      - name: Abrir PR para develop
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          BRANCH="${{ github.ref_name }}"
+          EXISTING=$(gh pr list --head "$BRANCH" --base develop --json number --jq length)
+          if [ "$EXISTING" = "0" ]; then
+            gh pr create \
+              --base develop \
+              --head "$BRANCH" \
+              --title "$BRANCH" \
+              --body "PR automático gerado pelo CI após build bem-sucedido em \`$BRANCH\`."
+          else
+            echo "PR já existe para $BRANCH → develop, pulando."
+          fi
